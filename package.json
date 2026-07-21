@@ -1,0 +1,12 @@
+{
+  "name": "youtube-dj",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "soundtouchjs": "0.3.0"
+  }
+}
