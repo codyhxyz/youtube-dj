@@ -4,6 +4,8 @@ Status: proof of concept, bugs likely
 
 Personal browser DJ workspace for one YouTube track.
 
+Live proof of concept: https://youtubedj.codyh.xyz
+
 ## Run
 
 Requires Node 22+, `yt-dlp`, and `ffmpeg`.
