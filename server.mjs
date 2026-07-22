@@ -1,5 +1,5 @@
 import { createReadStream } from 'node:fs'
-import { access, mkdir, stat } from 'node:fs/promises'
+import { access, mkdir, stat, unlink } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import { execFile } from 'node:child_process'
 import { dirname, join } from 'node:path'
@@ -57,7 +57,7 @@ function json(res, status, value) {
   res.end(JSON.stringify(value))
 }
 
-async function sendFile(req, res, path, type, cacheControl = 'no-store') {
+async function sendFile(req, res, path, type, cacheControl = 'no-store', deleteAfterSend = false) {
   try {
     const file = await stat(path)
     res.writeHead(200, {
@@ -66,6 +66,17 @@ async function sendFile(req, res, path, type, cacheControl = 'no-store') {
       'cache-control': cacheControl,
     })
     if (req.method === 'HEAD') return res.end()
+
+    if (deleteAfterSend) {
+      let deleted = false
+      const remove = () => {
+        if (deleted) return
+        deleted = true
+        unlink(path).catch(() => {})
+      }
+      res.once('finish', remove)
+      res.once('close', remove)
+    }
     createReadStream(path).pipe(res)
   } catch {
     json(res, 404, { error: 'Not found.' })
@@ -179,7 +190,14 @@ export function createAppServer() {
 
     const audioMatch = requestUrl.pathname.match(/^\/audio\/([\w-]+)\.m4a$/)
     if ((req.method === 'GET' || req.method === 'HEAD') && audioMatch) {
-      return sendFile(req, res, join(cacheDir, `${audioMatch[1]}.m4a`), 'audio/mp4', 'private, max-age=86400')
+      return sendFile(
+        req,
+        res,
+        join(cacheDir, `${audioMatch[1]}.m4a`),
+        'audio/mp4',
+        'private, max-age=86400',
+        process.env.NODE_ENV === 'production',
+      )
     }
 
     json(res, 404, { error: 'Not found.' })
