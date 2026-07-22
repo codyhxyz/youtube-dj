@@ -96,6 +96,7 @@ function commandError(error) {
 async function loadTrack(url) {
   await mkdir(cacheDir, { recursive: true })
 
+  const extractorArgs = process.env.YT_DLP_EXTRACTOR_ARGS
   let info
   try {
     const { stdout } = await exec(
@@ -108,6 +109,7 @@ async function loadTrack(url) {
         'duration <= 1200',
         '--max-filesize',
         '100M',
+        ...(extractorArgs ? ['--extractor-args', extractorArgs] : []),
         '--extract-audio',
         '--audio-format',
         'm4a',
