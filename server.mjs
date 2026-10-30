@@ -11,6 +11,12 @@ const root = dirname(fileURLToPath(import.meta.url))
 const publicDir = join(root, 'public')
 const cacheDir = join(root, '.cache')
 const maxBodyBytes = 8_192
+// Crawler and link-preview files: [content type, cache-control]
+const publicFiles = {
+  '/robots.txt': ['text/plain; charset=utf-8', 'public, max-age=3600'],
+  '/sitemap.xml': ['application/xml; charset=utf-8', 'public, max-age=3600'],
+  '/og.png': ['image/png', 'public, max-age=86400'],
+}
 
 export function normalizeYouTubeUrl(input) {
   let url
@@ -159,6 +165,11 @@ export function createAppServer() {
 
     if ((req.method === 'GET' || req.method === 'HEAD') && requestUrl.pathname === '/app.js') {
       return sendFile(req, res, join(publicDir, 'app.js'), 'text/javascript; charset=utf-8')
+    }
+
+    const publicFile = publicFiles[requestUrl.pathname]
+    if ((req.method === 'GET' || req.method === 'HEAD') && publicFile) {
+      return sendFile(req, res, join(publicDir, requestUrl.pathname.slice(1)), ...publicFile)
     }
 
     if ((req.method === 'GET' || req.method === 'HEAD') && requestUrl.pathname === '/vendor/soundtouch.js') {
